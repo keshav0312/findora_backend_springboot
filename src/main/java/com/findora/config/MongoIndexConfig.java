@@ -54,7 +54,7 @@ public class MongoIndexConfig {
         try {
             mongo.indexOps(type).ensureIndex(definition);
         } catch (Exception e) {
-            log.warn("Index on {} not created (probably already exists): {}", type.getSimpleName(), e.getMessage());
+            log.warn("Index on {} could not be created", type.getSimpleName(), e);
         }
     }
 }

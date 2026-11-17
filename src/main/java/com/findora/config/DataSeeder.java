@@ -132,11 +132,7 @@ public class DataSeeder implements ApplicationRunner {
         notification(arjun.getId(), "match", "Possible match found", "A likely match was found for \"Black Wallet\"");
         notification(priya.getId(), "claim", "Claim request", "Arjun Sharma wants to verify your found wallet report");
 
-        log.info("Seed complete. Demo logins:");
-        log.info("  user:   arjun@example.com   / password123");
-        log.info("  user:   priya@example.com   / password123");
-        log.info("  admin:  admin@findora.app   / admin12345");
-        log.info("  police: police@findora.app  / police12345");
+        log.info("Demo data seeding complete.");
         System.exit(SpringApplication.exit(ctx));
     }
 

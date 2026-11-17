@@ -92,7 +92,7 @@ public class AiService {
             Map<String, Object> message = (Map<String, Object>) choices.get(0).get("message");
             return message == null ? null : (String) message.get("content");
         } catch (Exception e) {
-            log.warn("Groq request failed: {}", e.getMessage());
+            log.warn("Groq request failed", e);
             return null;
         }
     }

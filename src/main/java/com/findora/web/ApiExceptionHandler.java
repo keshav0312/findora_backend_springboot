@@ -1,7 +1,9 @@
 package com.findora.web;
 
+import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -23,7 +25,12 @@ public class ApiExceptionHandler {
     private static final Logger log = LoggerFactory.getLogger(ApiExceptionHandler.class);
 
     @ExceptionHandler(ApiException.class)
-    public ResponseEntity<Map<String, Object>> handleApi(ApiException e) {
+    public ResponseEntity<Map<String, Object>> handleApi(ApiException e, HttpServletRequest request) {
+        if (e.getStatus().is5xxServerError()) {
+            log.error("API operation failed status={} method={} path={} requestId={}",
+                    e.getStatus().value(), request.getMethod(), request.getRequestURI(),
+                    MDC.get(ApiRequestLoggingFilter.REQUEST_ID_MDC_KEY), e);
+        }
         return ResponseEntity.status(e.getStatus()).body(ApiResponse.error(e.getMessage()));
     }
 
@@ -50,8 +57,9 @@ public class ApiExceptionHandler {
     }
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<Map<String, Object>> handleAny(Exception e) {
-        log.error("Unhandled error", e);
+    public ResponseEntity<Map<String, Object>> handleAny(Exception e, HttpServletRequest request) {
+        log.error("Unhandled API error method={} path={} requestId={}",
+                request.getMethod(), request.getRequestURI(), MDC.get(ApiRequestLoggingFilter.REQUEST_ID_MDC_KEY), e);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ApiResponse.error("Something went wrong"));
     }
 }

@@ -21,7 +21,7 @@ public class RealtimeService {
         try {
             server.getRoomOperations(room).sendEvent(event, payload);
         } catch (Exception e) {
-            log.warn("socket emit '{}' to room {} failed: {}", event, room, e.getMessage());
+            log.warn("Socket.IO emit failed for event '{}'", event, e);
         }
     }
 
@@ -30,7 +30,7 @@ public class RealtimeService {
         try {
             server.getBroadcastOperations().sendEvent(event, payload);
         } catch (Exception e) {
-            log.warn("socket broadcast '{}' failed: {}", event, e.getMessage());
+            log.warn("Socket.IO broadcast failed for event '{}'", event, e);
         }
     }
 }

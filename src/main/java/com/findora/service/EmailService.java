@@ -32,7 +32,7 @@ public class EmailService {
 
     private boolean send(String toEmail, String toName, String subject, String html) {
         if (cfg.apiKey() == null || cfg.apiKey().isBlank()) {
-            log.info("[email:disabled] Would send \"{}\" to {}", subject, toEmail);
+            log.info("[email:disabled] Email provider is not configured");
             return false;
         }
         try {
@@ -49,7 +49,7 @@ public class EmailService {
                     .toBodilessEntity();
             return true;
         } catch (Exception e) {
-            log.error("[email:error] Brevo request failed: {}", e.getMessage());
+            log.error("[email:error] Brevo request failed", e);
             return false;
         }
     }

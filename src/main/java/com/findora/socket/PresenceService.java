@@ -13,6 +13,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
@@ -26,6 +28,8 @@ import org.springframework.stereotype.Service;
  */
 @Service
 public class PresenceService {
+
+    private static final Logger log = LoggerFactory.getLogger(PresenceService.class);
 
     private static final long OFFLINE_GRACE_MS = 8000;
 
@@ -73,8 +77,8 @@ public class PresenceService {
         try {
             mongo.updateFirst(Query.query(Criteria.where("id").is(userId)),
                     new Update().set("lastSeen", Instant.now()), User.class);
-        } catch (Exception ignored) {
-            // non-fatal
+        } catch (Exception e) {
+            log.warn("Could not update last-seen timestamp after disconnect", e);
         }
     }
 

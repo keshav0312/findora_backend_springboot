@@ -1,0 +1,10 @@
+.git
+.idea
+.vscode
+.env
+.env.*
+target
+uploads
+logs
+*.log
+src/main/resources/application.yml

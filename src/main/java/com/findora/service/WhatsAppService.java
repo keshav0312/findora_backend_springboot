@@ -38,7 +38,7 @@ public class WhatsAppService {
         boolean configured = cfg.token() != null && !cfg.token().isBlank()
                 && cfg.phoneNumberId() != null && !cfg.phoneNumberId().isBlank();
         if (!configured) {
-            log.info("[whatsapp:disabled] Would message {}", toRaw);
+            log.info("[whatsapp:disabled] WhatsApp provider is not configured");
             return false;
         }
         String to = normalizePhone(toRaw);
@@ -59,7 +59,7 @@ public class WhatsAppService {
                     .toBodilessEntity();
             return true;
         } catch (Exception e) {
-            log.error("[whatsapp:error] Graph API request failed: {}", e.getMessage());
+            log.error("[whatsapp:error] Graph API request failed", e);
             return false;
         }
     }
