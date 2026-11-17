@@ -6,14 +6,34 @@ frontend keeps working with one small change (see "Socket.IO").
 
 ## Run
 
+Configuration is defined in `src/main/resources/application.yml`. Spring Boot no
+longer imports a local `.env` file. For local development, the YAML provides
+development-only JWT values; set `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`,
+and `CLOUDINARY_API_SECRET` in the process environment before uploading.
+
+For deployment, set `SPRING_PROFILES_ACTIVE=production` and provide real values
+for `JWT_SECRET`, `JWT_REFRESH_SECRET`, `MONGODB_URI`, `CLOUDINARY_CLOUD_NAME`,
+`CLOUDINARY_API_KEY`, and `CLOUDINARY_API_SECRET` through the hosting provider's
+environment settings. The production profile requires both JWT secrets and all
+three Cloudinary values and fails to start if any are missing.
+
+From this directory, run:
+
 ```bash
-cp .env.example .env        # fill in JWT_SECRET / JWT_REFRESH_SECRET / MONGODB_URI (use your old values)
-mvn spring-boot:run         # API on http://localhost:5000, Socket.IO on :5001
-# or: mvn clean package && java -jar target/findora-backend-1.0.0.jar
+mvn spring-boot:run
 ```
 
-Requires JDK 21+ and Maven. Copy your old `uploads/` folder next to where you run the app so existing
-photo URLs (`/uploads/<file>`) keep resolving.
+The API listens on `http://localhost:5000`, and Socket.IO listens on port `5001`.
+Alternatively, build and run the packaged application:
+
+```bash
+mvn clean package
+java -jar target/findora-backend-1.0.0.jar
+```
+
+Requires JDK 21+ and Maven. New report photos and chat attachments are uploaded
+to Cloudinary. Existing `/uploads/...` URLs still require the old `uploads/`
+folder.
 
 Demo data (**wipes** users, reports, matches, notifications, messages, bookmarks):
 
@@ -72,4 +92,5 @@ and set `NEXT_PUBLIC_SOCKET_URL` for production. (Alternatively put a reverse pr
 - Socket.IO connections are unauthenticated: any client can join any user/`admins` room. Fix by sending the
   JWT in the socket handshake and checking it in `SocketEventHandlers`.
 - "Restrict user" only sets `isVerified=false`; it does not block login.
-- No refresh-token endpoint (the frontend doesn't use one either); photos are on local disk.
+- No refresh-token endpoint (the frontend doesn't use one either); existing `/uploads/...` files remain
+  on local disk, while new report photos and chat attachments are stored in Cloudinary.

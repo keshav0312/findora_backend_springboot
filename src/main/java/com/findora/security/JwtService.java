@@ -28,7 +28,7 @@ public class JwtService {
         String refresh = props.jwt().refreshSecret();
         if (access == null || access.isBlank() || refresh == null || refresh.isBlank()) {
             throw new IllegalStateException(
-                    "JWT_SECRET and JWT_REFRESH_SECRET must be set (in .env or the environment).");
+                    "findora.jwt.secret and findora.jwt.refresh-secret must be set in application.yml or the environment.");
         }
         this.accessAlg = Algorithm.HMAC256(access);
         this.refreshAlg = Algorithm.HMAC256(refresh);

@@ -3,9 +3,6 @@ spring:
   application:
     name: findora-backend
 
-  config:
-    import: "optional:file:.env[.properties]"
-
   data:
     mongodb:
       uri: ${MONGODB_URI:mongodb://localhost:27017/findora}
@@ -28,8 +25,9 @@ server:
 
 findora:
   jwt:
-    secret: ${JWT_SECRET:}
-    refresh-secret: ${JWT_REFRESH_SECRET:}
+    # Local-development defaults only. The production profile requires real environment values.
+    secret: ${JWT_SECRET:local-development-only-access-key-replace-in-production}
+    refresh-secret: ${JWT_REFRESH_SECRET:local-development-only-refresh-key-replace-in-production}
 
   cors-origins: ${CORS_ORIGIN:http://localhost:3000}
   frontend-url: ${FRONTEND_URL:http://localhost:3000}
@@ -47,7 +45,7 @@ findora:
 
   brevo:
     api-key: ${BREVO_API_KEY:}
-    sender-email: ${BREVO_SENDER_EMAIL:no-reply@findora.app}
+    sender-email: ${BREVO_SENDER_EMAIL:keshavchoudhary719@gmail.com}
     sender-name: ${BREVO_SENDER_NAME:Findora}
 
   whatsapp:
@@ -56,6 +54,10 @@ findora:
     api-version: ${WHATSAPP_API_VERSION:v20.0}
     default-country-code: ${WHATSAPP_DEFAULT_COUNTRY_CODE:91}
 
+  cloudinary:
+    cloud-name: ${CLOUDINARY_CLOUD_NAME:}
+    api-key: ${CLOUDINARY_API_KEY:}
+    api-secret: ${CLOUDINARY_API_SECRET:}
 logging:
   level:
     com.findora: INFO

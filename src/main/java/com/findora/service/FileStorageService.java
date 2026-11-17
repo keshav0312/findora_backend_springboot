@@ -1,21 +1,17 @@
 package com.findora.service;
 
+import com.cloudinary.Cloudinary;
+import com.cloudinary.utils.ObjectUtils;
 import com.findora.config.AppProperties;
 import com.findora.web.ApiException;
-import jakarta.annotation.PostConstruct;
 import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
-import java.security.SecureRandom;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-/** Local-disk storage under `uploads/` (same as multer's diskStorage). Files are served at /uploads/<name>. */
+/** Stores report photos and chat attachments in Cloudinary. */
 @Service
 public class FileStorageService {
 
@@ -33,24 +29,27 @@ public class FileStorageService {
     public static final long MAX_PHOTO_BYTES = 5L * 1024 * 1024;
     public static final long MAX_CHAT_BYTES = 10L * 1024 * 1024;
 
-    private final Path dir;
-    private final SecureRandom random = new SecureRandom();
+    private final Cloudinary cloudinary;
+    private final boolean cloudinaryConfigured;
 
     public FileStorageService(AppProperties props) {
-        this.dir = Path.of(props.uploadDir()).toAbsolutePath().normalize();
+        AppProperties.Cloudinary config = props.cloudinary();
+        this.cloudinaryConfigured = !isBlank(config.cloudName())
+                && !isBlank(config.apiKey())
+                && !isBlank(config.apiSecret());
+        this.cloudinary = new Cloudinary(ObjectUtils.asMap(
+                "cloud_name", config.cloudName(),
+                "api_key", config.apiKey(),
+                "api_secret", config.apiSecret(),
+                "secure", true));
     }
 
-    @PostConstruct
-    void init() throws IOException {
-        Files.createDirectories(dir);
-    }
-
-    /** Report photo: jpeg/jpg/png/webp/gif, max 5 MB. Returns the public URL path ("/uploads/..."). */
+    /** Report photo: jpeg/jpg/png/webp/gif, max 5 MB. Returns its secure Cloudinary URL. */
     public String storeImage(MultipartFile file) {
         String ext = extensionOf(file.getOriginalFilename());
         if (ext == null || !IMAGE_EXT.contains(ext)) throw ApiException.badRequest("Only image files are allowed");
         if (file.getSize() > MAX_PHOTO_BYTES) throw ApiException.badRequest("File too large");
-        return save(file, ext);
+        return upload(file, "findora/reports");
     }
 
     /** Chat attachment: image or short audio note, max 10 MB. */
@@ -63,17 +62,31 @@ public class FileStorageService {
         }
         if (ext == null) throw ApiException.badRequest("Only images or audio voice notes are allowed");
         if (file.getSize() > MAX_CHAT_BYTES) throw ApiException.badRequest("File too large");
-        return save(file, ext);
+        return upload(file, "findora/chat-attachments");
     }
 
-    private String save(MultipartFile file, String ext) {
-        String name = System.currentTimeMillis() + "-" + random.nextInt(1_000_000_000) + "." + ext;
-        try (InputStream in = file.getInputStream()) {
-            Files.copy(in, dir.resolve(name), StandardCopyOption.REPLACE_EXISTING);
-        } catch (IOException e) {
-            throw new IllegalStateException("Could not store upload", e);
+    private String upload(MultipartFile file, String folder) {
+        if (!cloudinaryConfigured) {
+            throw ApiException.serviceUnavailable(
+                    "Cloudinary is not configured. Set CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, and CLOUDINARY_API_SECRET.");
         }
-        return "/uploads/" + name;
+        try {
+            Map<?, ?> result = cloudinary.uploader().upload(file.getBytes(), ObjectUtils.asMap(
+                    "folder", folder,
+                    "resource_type", "auto",
+                    "use_filename", true,
+                    "unique_filename", true,
+                    "overwrite", false));
+            Object secureUrl = result.get("secure_url");
+            if (secureUrl instanceof String url && !url.isBlank()) return url;
+            throw new IllegalStateException("Cloudinary upload returned no secure URL");
+        } catch (IOException e) {
+            throw new IllegalStateException("Could not read uploaded file", e);
+        }
+    }
+
+    private static boolean isBlank(String value) {
+        return value == null || value.isBlank();
     }
 
     private static String extensionOf(String filename) {
