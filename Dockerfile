@@ -19,7 +19,7 @@ ENV PORT=10000 \
     SOCKET_HOST=127.0.0.1
 
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends nginx supervisor gettext-base \
+    && apt-get install -y --no-install-recommends nginx supervisor gettext-base curl \
     && rm -rf /var/lib/apt/lists/* \
     && rm -f /etc/nginx/sites-enabled/default \
     && mkdir -p /app/uploads /tmp/nginx/client_temp /tmp/nginx/proxy_temp \
@@ -35,5 +35,8 @@ RUN chmod 0555 /app/start-container.sh \
 
 USER 10001:10001
 EXPOSE 10000
+
+HEALTHCHECK --interval=10s --timeout=5s --start-period=150s --retries=3 \
+    CMD curl --fail --silent http://127.0.0.1:10000/api/health || exit 1
 
 ENTRYPOINT ["/app/start-container.sh"]
